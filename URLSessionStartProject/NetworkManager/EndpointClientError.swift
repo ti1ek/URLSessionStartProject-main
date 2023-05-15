@@ -49,4 +49,3 @@ extension EndpointClientError: Equatable {
     }
 
 }
-

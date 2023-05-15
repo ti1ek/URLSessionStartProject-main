@@ -7,38 +7,43 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+final class ViewController: UIViewController {
 
+    @IBAction func TapButton(_ sender: Any) {
+        executeCall()
+    }
     private let endpointClient = EndpointClient(applicationSettings: ApplicationSettingsService())
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        executeCall()
     }
     
     func executeCall() {
         let endpoint = GetNameEndpoint()
-        let completion: EndpointClient.ObjectEndpointCompletion<String> = { result, response in
+        let completion: EndpointClient.ObjectEndpointCompletion<Cards> = { result, response in
             guard let responseUnwrapped = response else { return }
 
-            print("\n\n response = \(responseUnwrapped.allHeaderFields) ;\n \(responseUnwrapped.statusCode) \n")
+            //print("\n\n response = \(responseUnwrapped.allHeaderFields) ;\n \(responseUnwrapped.statusCode) \n")
             switch result {
-            case .success(let team):
-                print("team = \(team)")
+            case .success(let card):
+                for i in 0..<min(5, card.cards.count) {
+                    let card = card.cards[i]
+                    print("Name card: \(card.name ?? "")")
+                    print("Artist: \(card.artist ?? "")")
+                    print("ManaCost: \(card.manaCost ?? "")")
+                    print("SetName: \(card.setName ?? "")")
+                    print("Type: \(card.type ?? "") \n")
+                }
                 
             case .failure(let error):
                 print(error)
             }
         }
-        
         endpointClient.executeRequest(endpoint, completion: completion)
     }
-
-
 }
 
-final class GetNameEndpoint: ObjectResponseEndpoint<String> {
+final class GetNameEndpoint: ObjectResponseEndpoint<Cards> {
     
     override var method: RESTClient.RequestType { return .get }
     override var path: String { "/v1/cards" }
@@ -47,20 +52,11 @@ final class GetNameEndpoint: ObjectResponseEndpoint<String> {
     override init() {
         super.init()
 
-        queryItems = [URLQueryItem(name: "name", value: "Black Lotus")]
+        queryItems = [URLQueryItem(name: "name", value: "Black Lotus"),
+                      //URLQueryItem(name: "name", value: "Opt")
+        ]
     }
-    
 }
-
-
-
-
-
-
-
-
-
-
 
 func decodeJSONOld() {
     let str = """
@@ -71,7 +67,7 @@ func decodeJSONOld() {
 
     do {
         if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-            if let names = json["team"] as? [String] {
+            if let names = json["cards"] as? [String] {
                 print(names)
             }
         }
@@ -79,4 +75,3 @@ func decodeJSONOld() {
         print("Failed to load: \(error.localizedDescription)")
     }
 }
-
